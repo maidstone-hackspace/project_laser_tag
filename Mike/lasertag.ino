@@ -128,7 +128,6 @@ void updateDisplay() {
   lcd.print("% ");
 }
 
-
 void pickTeam() {
   while (1) {
     lcd.home();
