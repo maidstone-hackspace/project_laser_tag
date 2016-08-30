@@ -7,11 +7,11 @@
 #define INVERT false
 #define DEBOUNCE_MS 20     //A debounce time of 20 milliseconds usually works well for tactile button switches.
 #define TRIGGER_PIN 2
-#define IR_PIN      5      // Not needed, just for reference (inc in IRRemote library) 
+#define IR_PIN      5
 #define BUZZER_PIN  4
-#define FLASH_PIN   12        // Muzzle flash LED
-#define DOWN_PIN    13
+#define FLASH_PIN   3        // Muzzle flash LED
 #define UP_PIN      14
+#define DOWN_PIN    13
 #define ENTER_PIN   15
 
 // Object creation
@@ -30,6 +30,7 @@ int CHARGES = 10;
 float TEMP = 0;
 boolean menuActivated = true;
 byte subMenu = 0;
+uint8_t checksum;
 
 struct PACKET {
   uint8_t TEAM;
@@ -42,10 +43,10 @@ struct PACKET LASER;
 uint16_t dataPacket;
 
 // Lookup table for 4 bit damage
-static const uint8_t damageTable[16] = {1,2,4,5,7,10,15,17,20,25,30,35,40,50,75,100};
+static const uint8_t damageTable[16] = {1, 2, 4, 5, 7, 10, 15, 17, 20, 25, 30, 35, 40, 50, 75, 100};
 
 void setup() {
-  Serial.begin(115200); // for debugging
+  Serial.begin(115200);
   lcd.begin(16, 2);
   lcd.clear();
   lcd.home();
@@ -65,6 +66,12 @@ void setup() {
   LASER.DAMAGE = 8;
 }
 
+uint8_t generateChecksum()
+{
+  uint8_t checksum = LASER.TEAM + LASER.PLAYER + LASER.DAMAGE;
+  checksum = ((uint8_t)~checksum) >> 3;
+  return (checksum);
+}
 
 void laserSound() {
   digitalWrite(FLASH_PIN, HIGH);
@@ -207,7 +214,8 @@ void displayMenu() {
       case 2:
         menuActivated = false;
         lcd.clear();
-        dataPacket = (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
+        checksum=generateChecksum();
+        dataPacket = (checksum << 11) | (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
         return;
     }
   }
