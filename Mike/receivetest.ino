@@ -6,6 +6,7 @@
    http://arcfn.com
 */
 uint8_t damageTable[]= {1,2,4,5,7,10,15,17,20,25,30,35,40,50,75,100};
+char* teamTable[]= {"RED", "BLUE", "YELLOW", "GREEN"};
 
 #include <IRremote.h>
 
@@ -23,11 +24,11 @@ void setup()
 }
 
 void printData(uint16_t TEAM, uint16_t PLAYER, uint16_t DAMAGE) {
-    Serial.print("Hit by Player  ");
+    Serial.print("Hit by Player ");
     Serial.print(PLAYER);
-   Serial.print(" from Team ");
-    Serial.print(TEAM);
-    Serial.print(" for ");
+   Serial.print(" from the ");
+    Serial.print(teamTable[TEAM]);
+    Serial.print(" team for ");
     Serial.print(damageTable[DAMAGE]);
     Serial.println(" Damage.");
 }
