@@ -2,6 +2,9 @@
 #include <LiquidCrystal.h>
 #include <Button.h>
 #include <IRremote.h>
+#include <FastCRC.h>
+
+FastCRC16 CRC16;
 
 #define PULLUP false
 #define INVERT false
@@ -23,7 +26,7 @@ Button enterBtn(ENTER_PIN, PULLUP, INVERT, DEBOUNCE_MS);
 LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 
 // default settings
-int MAX_AMMO = 250;
+int MAX_AMMO = 5000;
 int AMMO = MAX_AMMO;
 int HEALTH = 100;
 int CHARGES = 10;
@@ -40,7 +43,7 @@ struct PACKET {
 
 struct PACKET LASER;
 
-uint16_t dataPacket;
+uint32_t dataPacket;
 
 // Lookup table for 4 bit damage
 static const uint8_t damageTable[16] = {1, 2, 4, 5, 7, 10, 15, 17, 20, 25, 30, 35, 40, 50, 75, 100};
@@ -68,8 +71,8 @@ void setup() {
 
 uint8_t generateChecksum()
 {
-  uint8_t checksum = LASER.TEAM + LASER.PLAYER + LASER.DAMAGE;
-  checksum = ((uint8_t)~checksum) >> 3;
+  uint8_t checksum = 0;
+  checksum = (uint8_t)~(LASER.TEAM + LASER.PLAYER + LASER.DAMAGE) >> 3;
   return (checksum);
 }
 
@@ -127,6 +130,7 @@ void updateDisplay() {
   lcd.print(HEALTH);
   lcd.print("% ");
 }
+
 
 void pickTeam() {
   while (1) {
@@ -213,8 +217,10 @@ void displayMenu() {
       case 2:
         menuActivated = false;
         lcd.clear();
-        checksum=generateChecksum();
-        dataPacket = (checksum << 11) | (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
+        dataPacket = (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
+        uint8_t packetBuffer[2] = {dataPacket>>8, (dataPacket<<8)>>8};
+        uint16_t CRC = CRC16.ccitt(packetBuffer, sizeof(packetBuffer));       
+        dataPacket = (CRC << 16) | (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
         return;
     }
   }
@@ -239,11 +245,11 @@ void loop() {
 
   if (triggerBtn.isPressed()) {       //If the button was pressed, change the LED state
     if (!(CHARGES || AMMO)) return;
-    irsend.sendSony(dataPacket, 16); delay(15);
-    Serial.println(dataPacket, BIN);
+    irsend.sendSony(dataPacket, 32); // delay(5);
+    //Serial.println(dataPacket, HEX); // for debugging 
     laserSound();
     AMMO -= 1;
-    TEMP = TEMP + 2;
+    //TEMP = TEMP + 2;
     if (TEMP > 100) cooldown();
   }
   if (AMMO == 0  && CHARGES) {
