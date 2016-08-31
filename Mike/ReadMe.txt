@@ -13,11 +13,13 @@ Up menu button on Pin 14
 Down menu button on Pin 13
 Enter menu button on pin 15
 
-The data packet is 11 bits:
-0..1    Team ID (4 teams - Red, Blue, Yellow, Green)
-2..6    Player ID (32 Players per team)
-7..10   Damage (4 bits, using a look-up table for 1-100 damage)
+The data packet is 32 bits:
 
-I will add a further 5 bits of CRC to make a 16 bit data packet.
+0..3     4-bit  : Damage (using a look-up table for 1-100 damage)
+4..8     5-bit  : Player ID (32 Players per team)
+9..10    2-bit  : Team ID (4 teams - Red, Blue, Yellow, Green)
+11..15   5-bit  : Unused. For future expansion. 
+16..31   16-bit : CRC-16
+
 
 
