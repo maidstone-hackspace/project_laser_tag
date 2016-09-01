@@ -1,11 +1,17 @@
 #include <FastCRC.h>
+#include <IRremote.h>
 
 FastCRC16 CRC16;
 
+/*
+   IRremote: IRrecvDemo - demonstrates receiving IR codes with IRrecv
+   An IR detector/demodulator must be connected to the input RECV_PIN.
+   Version 0.1 July, 2009
+   Copyright 2009 Ken Shirriff
+   http://arcfn.com
+*/
 uint8_t damageTable[]= {1,2,4,5,7,10,15,17,20,25,30,35,40,50,75,100};
-char* teamTable[]= {"RED", "BLUE", "YELLOW", "GREEN"};
-
-#include <IRremote.h>
+char const* teamTable[]= {"RED", "BLUE", "YELLOW", "GREEN"};
 
 int RECV_PIN = 11;
 
@@ -44,6 +50,7 @@ void loop() {
     uint8_t crcBuffer[2] = {MSB, LSB};
     uint16_t validCRC = CRC16.ccitt(crcBuffer, sizeof(crcBuffer));
     if (validCRC == CRC) printData(TEAM, PLAYER, DAMAGE);
+    //printData(TEAM, PLAYER, DAMAGE); // For debugging error rates
     irrecv.resume(); // Receive the next value
   }
 }
