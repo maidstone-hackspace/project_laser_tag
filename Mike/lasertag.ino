@@ -8,7 +8,7 @@ FastCRC16 CRC16;
 
 #define PULLUP false
 #define INVERT false
-#define DEBOUNCE_MS 20     //A debounce time of 20 milliseconds usually works well for tactile button switches.
+#define DEBOUNCE_MS 20
 #define TRIGGER_PIN 2
 #define IR_PIN      5
 #define BUZZER_PIN  4
@@ -16,6 +16,13 @@ FastCRC16 CRC16;
 #define UP_PIN      14
 #define DOWN_PIN    13
 #define ENTER_PIN   15
+
+#define red    23
+#define green  22
+#define blue   21
+
+#define ON LOW
+#define OFF HIGH
 
 // Object creation
 IRsend irsend;
@@ -28,12 +35,13 @@ LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 // default settings
 int MAX_AMMO = 5000;
 int AMMO = MAX_AMMO;
-int HEALTH = 100;
-int CHARGES = 10;
+double HEALTH = 10000;
+int CHARGES = 5;
 float TEMP = 0;
-boolean menuActivated = true;
-byte subMenu = 0;
-uint8_t checksum;
+
+// state machine variables
+byte gameState = 0;
+byte menuState = 0;
 
 struct PACKET {
   uint8_t TEAM;
@@ -67,15 +75,61 @@ void setup() {
   LASER.TEAM = 0;
   LASER.PLAYER = 0;
   LASER.DAMAGE = 8;
+
+  pinMode(red, OUTPUT);
+  pinMode(green, OUTPUT);
+  pinMode(blue, OUTPUT);
 }
 
-uint8_t generateChecksum()
-{
-  uint8_t checksum = 0;
-  checksum = (uint8_t)~(LASER.TEAM + LASER.PLAYER + LASER.DAMAGE) >> 3;
-  return (checksum);
+void setLED(byte colour) {
+  switch (colour) {
+    case 0: // red
+      digitalWrite(red, ON);
+      digitalWrite(green, OFF);
+      digitalWrite(blue, OFF);
+      break;
+    case 1: // green
+      digitalWrite(red, OFF);
+      digitalWrite(green, ON);
+      digitalWrite(blue, OFF);
+      break;
+    case 2: // blue
+      digitalWrite(red, OFF);
+      digitalWrite(green, OFF);
+      digitalWrite(blue, ON);
+      break;
+    case 3: // yellow
+      digitalWrite(red, ON);
+      digitalWrite(green, ON);
+      digitalWrite(blue, OFF);
+      break;
+    case 4: // cyan
+      digitalWrite(red, OFF);
+      digitalWrite(green, ON);
+      digitalWrite(blue, ON);
+      break;
+    case 5: // magenta
+      digitalWrite(red, ON);
+      digitalWrite(green, OFF);
+      digitalWrite(blue, ON);
+      break;
+    case 6: // white
+      digitalWrite(red, ON);
+      digitalWrite(green, ON);
+      digitalWrite(blue, ON);
+      break; // off
+    case 7:
+      digitalWrite(red, OFF);
+      digitalWrite(green, OFF);
+      digitalWrite(blue, OFF);
+      break;
+    default:
+      digitalWrite(red, OFF);
+      digitalWrite(green, OFF);
+      digitalWrite(blue, OFF);
+      break;
+  }
 }
-
 void laserSound() {
   digitalWrite(FLASH_PIN, HIGH);
   for (int start = 50; start < 175; start = start + 1) {
@@ -127,7 +181,7 @@ void updateDisplay() {
   // print health
   lcd.setCursor(9, 1);
   lcd.print("H:");
-  lcd.print(HEALTH);
+  lcd.print(int(ceil(HEALTH/100)));
   lcd.print("% ");
 }
 
@@ -140,18 +194,22 @@ void pickTeam() {
       case 0:
         lcd.setCursor(6, 1);
         lcd.print("RED");
+        setLED(0);
         break;
       case 1:
         lcd.setCursor(6, 1);
         lcd.print("BLUE");
+        setLED(2);
         break;
       case 2:
         lcd.setCursor(5, 1);
         lcd.print("YELLOW");
+        setLED(3);
         break;
       case 3:
         lcd.setCursor(6, 1);
         lcd.print("GREEN");
+        setLED(1);
         break;
     }
     upBtn.read();                    //Read the button
@@ -169,7 +227,7 @@ void pickTeam() {
     }
     enterBtn.read();
     if (enterBtn.wasReleased()) {
-      subMenu = 1;
+      menuState = 1;
       return;
     }
   }
@@ -196,7 +254,7 @@ void pickPlayer() {
     }
     enterBtn.read();
     if (enterBtn.wasReleased()) {
-      subMenu = 2;
+      menuState = 2;
       lcd.clear();
       return;
     }
@@ -207,7 +265,7 @@ void displayMenu() {
   while (1) {
     lcd.clear();
     lcd.home();
-    switch (subMenu) {
+    switch (menuState) {
       case 0:
         pickTeam();
         break;
@@ -215,11 +273,12 @@ void displayMenu() {
         pickPlayer();
         break;
       case 2:
-        menuActivated = false;
+        gameState = 1;  // game on
+        setLED(1);
         lcd.clear();
         dataPacket = (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
-        uint8_t packetBuffer[2] = {dataPacket>>8, (dataPacket<<8)>>8};
-        uint16_t CRC = CRC16.ccitt(packetBuffer, sizeof(packetBuffer));       
+        uint8_t packetBuffer[2] = {dataPacket >> 8, (dataPacket << 8) >> 8};
+        uint16_t CRC = CRC16.ccitt(packetBuffer, sizeof(packetBuffer));
         dataPacket = (CRC << 16) | (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
         return;
     }
@@ -234,30 +293,33 @@ void cooldown() {
     delayMicroseconds(countdown);
     TEMP = 100 - countdown;
     updateDisplay();
+
   }
 }
 
+
 void loop() {
-  if (menuActivated) displayMenu();
-  else updateDisplay();
+  if (!gameState) displayMenu();
+  updateDisplay();
 
   triggerBtn.read();                    //Read the button
 
   if (triggerBtn.isPressed()) {       //If the button was pressed, change the LED state
     if (!(CHARGES || AMMO)) return;
-    irsend.sendSony(dataPacket, 32); // delay(5);
-    //Serial.println(dataPacket, HEX); // for debugging 
+    irsend.sendSony(dataPacket, 32);
+    //Serial.println(dataPacket, HEX); // for debugging
     laserSound();
     AMMO -= 1;
-    //TEMP = TEMP + 2;
+    //TEMP = TEMP + 3;
     if (TEMP > 100) cooldown();
   }
   if (AMMO == 0  && CHARGES) {
     updateDisplay();
     waitForReload();
   }
-  TEMP = TEMP - 0.1;
+  TEMP = TEMP - 0.25;
   if (TEMP < 0) TEMP = 0;
+  setLED(HEALTH>=66 ? 1 : HEALTH>=33 ? 3 : HEALTH>=0 ? 0 : 7);
 }
 
 
