@@ -10,6 +10,7 @@ FastCRC16 CRC16;
 #define INVERT false
 #define DEBOUNCE_MS 20
 #define TRIGGER_PIN 2
+#define RELOAD_PIN  6
 #define IR_PIN      5
 #define BUZZER_PIN  4
 #define FLASH_PIN   3        // Muzzle flash LED
@@ -17,9 +18,9 @@ FastCRC16 CRC16;
 #define DOWN_PIN    13
 #define ENTER_PIN   15
 
-#define red    23
-#define green  22
-#define blue   21
+#define RED_PIN    21
+#define GREEN_PIN  23
+#define BLUE_PIN   22
 
 #define ON LOW
 #define OFF HIGH
@@ -27,13 +28,14 @@ FastCRC16 CRC16;
 // Object creation
 IRsend irsend;
 Button triggerBtn(TRIGGER_PIN, PULLUP, INVERT, DEBOUNCE_MS);    //Declare the button
+Button reloadBtn(RELOAD_PIN, PULLUP, INVERT, DEBOUNCE_MS);    //Declare the button
 Button upBtn(UP_PIN, PULLUP, INVERT, DEBOUNCE_MS);
 Button downBtn(DOWN_PIN, PULLUP, INVERT, DEBOUNCE_MS);
 Button enterBtn(ENTER_PIN, PULLUP, INVERT, DEBOUNCE_MS);
 LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 
 // default settings
-int MAX_AMMO = 5000;
+int MAX_AMMO = 50;
 int AMMO = MAX_AMMO;
 double HEALTH = 10000;
 int CHARGES = 5;
@@ -57,7 +59,7 @@ uint32_t dataPacket;
 static const uint8_t damageTable[16] = {1, 2, 4, 5, 7, 10, 15, 17, 20, 25, 30, 35, 40, 50, 75, 100};
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(115200); // for debugging
   lcd.begin(16, 2);
   lcd.clear();
   lcd.home();
@@ -76,57 +78,58 @@ void setup() {
   LASER.PLAYER = 0;
   LASER.DAMAGE = 8;
 
-  pinMode(red, OUTPUT);
-  pinMode(green, OUTPUT);
-  pinMode(blue, OUTPUT);
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
 }
 
 void setLED(byte colour) {
+  // 0Red 1Green 2Blue 3Yellow 4Cyan 5Magenta 6WHite 7Off
   switch (colour) {
-    case 0: // red
-      digitalWrite(red, ON);
-      digitalWrite(green, OFF);
-      digitalWrite(blue, OFF);
+    case 0: // RED_PIN
+      digitalWrite(RED_PIN, ON);
+      digitalWrite(GREEN_PIN, OFF);
+      digitalWrite(BLUE_PIN, OFF);
       break;
-    case 1: // green
-      digitalWrite(red, OFF);
-      digitalWrite(green, ON);
-      digitalWrite(blue, OFF);
+    case 1: // GREEN_PIN
+      digitalWrite(RED_PIN, OFF);
+      digitalWrite(GREEN_PIN, ON);
+      digitalWrite(BLUE_PIN, OFF);
       break;
-    case 2: // blue
-      digitalWrite(red, OFF);
-      digitalWrite(green, OFF);
-      digitalWrite(blue, ON);
+    case 2: // BLUE_PIN
+      digitalWrite(RED_PIN, OFF);
+      digitalWrite(GREEN_PIN, OFF);
+      digitalWrite(BLUE_PIN, ON);
       break;
     case 3: // yellow
-      digitalWrite(red, ON);
-      digitalWrite(green, ON);
-      digitalWrite(blue, OFF);
+      digitalWrite(RED_PIN, ON);
+      digitalWrite(GREEN_PIN, ON);
+      digitalWrite(BLUE_PIN, OFF);
       break;
     case 4: // cyan
-      digitalWrite(red, OFF);
-      digitalWrite(green, ON);
-      digitalWrite(blue, ON);
+      digitalWrite(RED_PIN, OFF);
+      digitalWrite(GREEN_PIN, ON);
+      digitalWrite(BLUE_PIN, ON);
       break;
     case 5: // magenta
-      digitalWrite(red, ON);
-      digitalWrite(green, OFF);
-      digitalWrite(blue, ON);
+      digitalWrite(RED_PIN, ON);
+      digitalWrite(GREEN_PIN, OFF);
+      digitalWrite(BLUE_PIN, ON);
       break;
     case 6: // white
-      digitalWrite(red, ON);
-      digitalWrite(green, ON);
-      digitalWrite(blue, ON);
+      digitalWrite(RED_PIN, ON);
+      digitalWrite(GREEN_PIN, ON);
+      digitalWrite(BLUE_PIN, ON);
       break; // off
     case 7:
-      digitalWrite(red, OFF);
-      digitalWrite(green, OFF);
-      digitalWrite(blue, OFF);
+      digitalWrite(RED_PIN, OFF);
+      digitalWrite(GREEN_PIN, OFF);
+      digitalWrite(BLUE_PIN, OFF);
       break;
     default:
-      digitalWrite(red, OFF);
-      digitalWrite(green, OFF);
-      digitalWrite(blue, OFF);
+      digitalWrite(RED_PIN, OFF);
+      digitalWrite(GREEN_PIN, OFF);
+      digitalWrite(BLUE_PIN, OFF);
       break;
   }
 }
@@ -152,13 +155,6 @@ void recharge() {
   }
 }
 
-void waitForReload() {
-  recharge();
-  AMMO = MAX_AMMO;
-  TEMP = 0;
-  CHARGES = CHARGES - 1;
-}
-
 void updateDisplay() {
   // Print number of charges
   lcd.setCursor(1, 0);
@@ -181,7 +177,7 @@ void updateDisplay() {
   // print health
   lcd.setCursor(9, 1);
   lcd.print("H:");
-  lcd.print(int(ceil(HEALTH/100)));
+  lcd.print(int(ceil(HEALTH / 100)));
   lcd.print("% ");
 }
 
@@ -191,6 +187,7 @@ void pickTeam() {
     lcd.home();
     lcd.print("  Pick a Team");
     switch (LASER.TEAM) {
+      // 0Red 1Green 2Blue 3Yellow 4Cyan 5Magenta 6WHite 7Off
       case 0:
         lcd.setCursor(6, 1);
         lcd.print("RED");
@@ -203,25 +200,45 @@ void pickTeam() {
         break;
       case 2:
         lcd.setCursor(5, 1);
+        lcd.print("GREEN");
+        setLED(1);
+        break;
+      case 3:
+        lcd.setCursor(5, 1);
         lcd.print("YELLOW");
         setLED(3);
         break;
-      case 3:
+      case 4:
         lcd.setCursor(6, 1);
-        lcd.print("GREEN");
-        setLED(1);
+        lcd.print("CYAN");
+        setLED(4);
+        break;
+      case 5:
+        lcd.setCursor(5, 1);
+        lcd.print("MAGENTA");
+        setLED(5);
+        break;
+      case 6:
+        lcd.setCursor(5, 1);
+        lcd.print("WHITE");
+        setLED(6);
+        break;
+      case 7:
+        lcd.setCursor(6, 1);
+        lcd.print("SOLO");
+        setLED(7);
         break;
     }
     upBtn.read();                    //Read the button
     if (upBtn.wasReleased()) {
       LASER.TEAM += 1;
-      if (LASER.TEAM > 3) LASER.TEAM = 0;
+      if (LASER.TEAM > 7) LASER.TEAM = 0;
       lcd.clear();
     }
     downBtn.read();
     if (downBtn.wasReleased()) {
       LASER.TEAM -= 1;
-      if (LASER.TEAM == 255) LASER.TEAM = 3;
+      if (LASER.TEAM == 255) LASER.TEAM = 7;
       Serial.println(LASER.TEAM);
       lcd.clear();
     }
@@ -237,18 +254,18 @@ void pickPlayer() {
   while (1) {
     lcd.home();
     lcd.print("Pick a Player ID");
-    lcd.setCursor(8, 1);
-    lcd.print(LASER.PLAYER);
+    lcd.setCursor(7, 1);
+    lcd.print(LASER.PLAYER + 1);
     upBtn.read();                    //Read the button
     if (upBtn.wasReleased()) {
       LASER.PLAYER += 1;
-      if (LASER.PLAYER > 31) LASER.PLAYER = 0;
+      if (LASER.PLAYER > 63) LASER.PLAYER = 0;
       lcd.clear();
     }
     downBtn.read();
     if (downBtn.wasReleased()) {
       LASER.PLAYER -= 1;
-      if (LASER.PLAYER == 255) LASER.PLAYER = 31;
+      if (LASER.PLAYER == 255) LASER.PLAYER = 63;
       Serial.println(LASER.PLAYER);
       lcd.clear();
     }
@@ -276,10 +293,11 @@ void displayMenu() {
         gameState = 1;  // game on
         setLED(1);
         lcd.clear();
-        dataPacket = (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
+        dataPacket = (LASER.TEAM << 13) | (LASER.PLAYER << 7) | LASER.DAMAGE;
         uint8_t packetBuffer[2] = {dataPacket >> 8, (dataPacket << 8) >> 8};
         uint16_t CRC = CRC16.ccitt(packetBuffer, sizeof(packetBuffer));
-        dataPacket = (CRC << 16) | (LASER.TEAM << 9) | (LASER.PLAYER << 4) | LASER.DAMAGE;
+        dataPacket = (CRC << 16) | dataPacket;
+        Serial.println(dataPacket, HEX);
         return;
     }
   }
@@ -297,29 +315,54 @@ void cooldown() {
   }
 }
 
+void checkForHit() {
+  // TBC
+}
 
 void loop() {
-  if (!gameState) displayMenu();
   updateDisplay();
+  checkForHit();
 
-  triggerBtn.read();                    //Read the button
+  if (!gameState) displayMenu();
 
-  if (triggerBtn.isPressed()) {       //If the button was pressed, change the LED state
-    if (!(CHARGES || AMMO)) return;
-    irsend.sendSony(dataPacket, 32);
-    //Serial.println(dataPacket, HEX); // for debugging
-    laserSound();
-    AMMO -= 1;
-    //TEMP = TEMP + 3;
-    if (TEMP > 100) cooldown();
+  if (gameState == 1) { // Shooting
+    triggerBtn.read();                    //Read the button
+
+    if (triggerBtn.isPressed()) {       //If the button was pressed, change the LED state
+      if (!(CHARGES || AMMO)) return;
+      irsend.sendSony(dataPacket, 32);
+      //Serial.println(dataPacket, HEX); // for debugging
+      laserSound();
+      AMMO -= 1;
+      if (AMMO == 0  && CHARGES) {
+        updateDisplay();
+        gameState = 2;
+      }
+      TEMP = TEMP + 4;
+      if (TEMP > 100) cooldown();
+    }
   }
-  if (AMMO == 0  && CHARGES) {
-    updateDisplay();
-    waitForReload();
+
+  if (gameState == 2) { // Wait for reload
+    reloadBtn.read();                    //Read the button
+
+    if (reloadBtn.isPressed()) {
+      CHARGES = CHARGES - 1;
+      
+      
+      if (CHARGES>=0) 
+      {
+        recharge();
+        AMMO = MAX_AMMO;
+        updateDisplay();    
+        gameState=1;
+      }
+      else gameState = 3; // out of ammo
+    }
   }
   TEMP = TEMP - 0.25;
   if (TEMP < 0) TEMP = 0;
-  setLED(HEALTH>=66 ? 1 : HEALTH>=33 ? 3 : HEALTH>=0 ? 0 : 7);
+  setLED(HEALTH >= 66 ? 1 : HEALTH >= 33 ? 3 : HEALTH >= 0 ? 0 : 7);
 }
 
 
