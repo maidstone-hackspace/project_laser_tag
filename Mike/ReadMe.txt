@@ -22,3 +22,5 @@ The data packet is 32 bits:
 13..15    3-bit  : Team ID (8 teams - Red, Blue, Green, Yellow, Cyan, magenta, White, Solo)
 16..31   16-bit : CRC-16
 
+At some point in the future the code will need to be re-written as a Finite State Machine to allow multi-tasking. 
+
