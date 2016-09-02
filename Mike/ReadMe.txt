@@ -5,6 +5,8 @@ I'm using a Teensy 3.2 as the extra processing power will come in handy when I l
 So far I have:
 
 Trigger button on Pin 2
+Reload Button on Pin 6
+RGB LED on Pins, 21, 22, 23
 IR LED (20 degree) on Pin 5
 Piezo Buzzer on Pin 4
 16x2 LCD DIsplay on pins 11,12,10,9,8,7
@@ -15,11 +17,8 @@ Enter menu button on pin 15
 
 The data packet is 32 bits:
 
-0..3     4-bit  : Damage (using a look-up table for 1-100 damage)
-4..8     5-bit  : Player ID (32 Players per team)
-9..10    2-bit  : Team ID (4 teams - Red, Blue, Yellow, Green)
-11..15   5-bit  : Unused. For future expansion. 
+0..6     7-bit  : Damage (using a 128 element look-up table for damage) 
+7..12     6-bit  : Player ID (64 Players per team)
+13..15    3-bit  : Team ID (8 teams - Red, Blue, Green, Yellow, Cyan, magenta, White, Solo)
 16..31   16-bit : CRC-16
-
-
 
