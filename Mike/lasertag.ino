@@ -9,24 +9,28 @@ FastCRC16 CRC16;
 #define PULLUP false
 #define INVERT false
 #define DEBOUNCE_MS 20
-#define TRIGGER_PIN 2
-#define RELOAD_PIN  6
-#define IR_PIN      5
-#define BUZZER_PIN  4
-#define FLASH_PIN   3        // Muzzle flash LED
-#define UP_PIN      14
-#define DOWN_PIN    13
-#define ENTER_PIN   15
 
-#define RED_PIN    21
-#define GREEN_PIN  23
-#define BLUE_PIN   22
+// pins used
+#define TRIGGER_PIN 2
+#define FLASH_LED   3
+#define BUZZER_PIN  4
+#define IR_LED      5
+#define RELOAD_PIN  6
+#define DOWN_PIN    13
+#define UP_PIN      14
+#define ENTER_PIN   15
+#define RECV_PIN    16
+#define HIT_LED     17
+#define RED_LED     21
+#define BLUE_LED    22
+#define GREEN_LED   23
 
 #define ON LOW
 #define OFF HIGH
 
 // Object creation
 IRsend irsend;
+IRrecv irrecv(RECV_PIN);
 Button triggerBtn(TRIGGER_PIN, PULLUP, INVERT, DEBOUNCE_MS);    //Declare the button
 Button reloadBtn(RELOAD_PIN, PULLUP, INVERT, DEBOUNCE_MS);    //Declare the button
 Button upBtn(UP_PIN, PULLUP, INVERT, DEBOUNCE_MS);
@@ -34,8 +38,11 @@ Button downBtn(DOWN_PIN, PULLUP, INVERT, DEBOUNCE_MS);
 Button enterBtn(ENTER_PIN, PULLUP, INVERT, DEBOUNCE_MS);
 LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 
+decode_results results;
+unsigned long ledTime;
+
 // default settings
-int MAX_AMMO = 50;
+int MAX_AMMO = 5000;
 int AMMO = MAX_AMMO;
 double HEALTH = 10000;
 int CHARGES = 5;
@@ -56,7 +63,10 @@ struct PACKET LASER;
 uint32_t dataPacket;
 
 // Lookup table for 4 bit damage
-static const uint8_t damageTable[16] = {1, 2, 4, 5, 7, 10, 15, 17, 20, 25, 30, 35, 40, 50, 75, 100};
+uint8_t damageTable[] = {1, 2, 4, 5, 7, 10, 15, 17, 20, 25, 30, 35, 40, 50, 75, 100};
+
+// Look-up table for team colours
+char const* teamTable[] = {"RED", "BLUE", "GREEN", "YELLOW", "CYAN", "MAGENTA", "WHITE", "SOLO"};
 
 void setup() {
   Serial.begin(115200); // for debugging
@@ -66,10 +76,11 @@ void setup() {
   lcd.print("  MHS Lasertag");
   lcd.setCursor(2, 1);
   lcd.print("Game System");
-  pinMode(FLASH_PIN, OUTPUT);
-  pinMode(IR_PIN, OUTPUT);
+  pinMode(FLASH_LED, OUTPUT);
+  pinMode(IR_LED, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(TRIGGER_PIN, INPUT);
+  pinMode(HIT_LED, OUTPUT);
 
   delay(1000);
   lcd.clear();
@@ -78,70 +89,71 @@ void setup() {
   LASER.PLAYER = 0;
   LASER.DAMAGE = 8;
 
-  pinMode(RED_PIN, OUTPUT);
-  pinMode(GREEN_PIN, OUTPUT);
-  pinMode(BLUE_PIN, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+  pinMode(GREEN_LED, OUTPUT);
+  pinMode(BLUE_LED, OUTPUT);
+  irrecv.enableIRIn(); // Start the receiver
 }
 
 void setLED(byte colour) {
   // 0Red 1Green 2Blue 3Yellow 4Cyan 5Magenta 6WHite 7Off
   switch (colour) {
-    case 0: // RED_PIN
-      digitalWrite(RED_PIN, ON);
-      digitalWrite(GREEN_PIN, OFF);
-      digitalWrite(BLUE_PIN, OFF);
+    case 0: // RED_LED
+      digitalWrite(RED_LED, ON);
+      digitalWrite(GREEN_LED, OFF);
+      digitalWrite(BLUE_LED, OFF);
       break;
-    case 1: // GREEN_PIN
-      digitalWrite(RED_PIN, OFF);
-      digitalWrite(GREEN_PIN, ON);
-      digitalWrite(BLUE_PIN, OFF);
+    case 1: // GREEN_LED
+      digitalWrite(RED_LED, OFF);
+      digitalWrite(GREEN_LED, ON);
+      digitalWrite(BLUE_LED, OFF);
       break;
-    case 2: // BLUE_PIN
-      digitalWrite(RED_PIN, OFF);
-      digitalWrite(GREEN_PIN, OFF);
-      digitalWrite(BLUE_PIN, ON);
+    case 2: // BLUE_LED
+      digitalWrite(RED_LED, OFF);
+      digitalWrite(GREEN_LED, OFF);
+      digitalWrite(BLUE_LED, ON);
       break;
     case 3: // yellow
-      digitalWrite(RED_PIN, ON);
-      digitalWrite(GREEN_PIN, ON);
-      digitalWrite(BLUE_PIN, OFF);
+      digitalWrite(RED_LED, ON);
+      digitalWrite(GREEN_LED, ON);
+      digitalWrite(BLUE_LED, OFF);
       break;
     case 4: // cyan
-      digitalWrite(RED_PIN, OFF);
-      digitalWrite(GREEN_PIN, ON);
-      digitalWrite(BLUE_PIN, ON);
+      digitalWrite(RED_LED, OFF);
+      digitalWrite(GREEN_LED, ON);
+      digitalWrite(BLUE_LED, ON);
       break;
     case 5: // magenta
-      digitalWrite(RED_PIN, ON);
-      digitalWrite(GREEN_PIN, OFF);
-      digitalWrite(BLUE_PIN, ON);
+      digitalWrite(RED_LED, ON);
+      digitalWrite(GREEN_LED, OFF);
+      digitalWrite(BLUE_LED, ON);
       break;
     case 6: // white
-      digitalWrite(RED_PIN, ON);
-      digitalWrite(GREEN_PIN, ON);
-      digitalWrite(BLUE_PIN, ON);
+      digitalWrite(RED_LED, ON);
+      digitalWrite(GREEN_LED, ON);
+      digitalWrite(BLUE_LED, ON);
       break; // off
     case 7:
-      digitalWrite(RED_PIN, OFF);
-      digitalWrite(GREEN_PIN, OFF);
-      digitalWrite(BLUE_PIN, OFF);
+      digitalWrite(RED_LED, OFF);
+      digitalWrite(GREEN_LED, OFF);
+      digitalWrite(BLUE_LED, OFF);
       break;
     default:
-      digitalWrite(RED_PIN, OFF);
-      digitalWrite(GREEN_PIN, OFF);
-      digitalWrite(BLUE_PIN, OFF);
+      digitalWrite(RED_LED, OFF);
+      digitalWrite(GREEN_LED, OFF);
+      digitalWrite(BLUE_LED, OFF);
       break;
   }
 }
 void laserSound() {
-  digitalWrite(FLASH_PIN, HIGH);
+  digitalWrite(FLASH_LED, HIGH);
   for (int start = 50; start < 175; start = start + 1) {
     digitalWrite(BUZZER_PIN, HIGH);  //positive square wave
     delayMicroseconds(start);      //192uS
     digitalWrite(BUZZER_PIN, LOW);     //neutral square wave
     delayMicroseconds(start);      //192uS
   }
-  digitalWrite(FLASH_PIN, LOW);
+  digitalWrite(FLASH_LED, LOW);
 }
 
 void recharge() {
@@ -315,8 +327,36 @@ void cooldown() {
   }
 }
 
+void printData(uint16_t TEAM, uint16_t PLAYER, uint16_t DAMAGE) {
+  Serial.print("Hit by Player ");
+  Serial.print(PLAYER + 1);
+  Serial.print(" from the ");
+  Serial.print(teamTable[TEAM]);
+  Serial.print(" team for ");
+  Serial.print(damageTable[DAMAGE]);
+  Serial.println(" Damage.");
+}
+
 void checkForHit() {
-  // TBC
+
+  if (irrecv.decode(&results)) {
+    // results.value & (((1 << NUMBER_OF_BITS) - 1) << POSITION_OF_LEFTSHIFTED_FIRST_BIT)) >> SHIFT_TO_RIGHT_EDGE
+    uint16_t TEAM = (results.value & (((1 << 3) - 1) << 13)) >> 13;
+    uint16_t PLAYER = (results.value & (((1 << 6) - 1) << 7)) >> 7;
+    uint16_t DAMAGE = (results.value & (((1 << 7) - 1)));
+    uint16_t CRC = results.value >> 16;
+    uint16_t DATA = (TEAM << 13) | (PLAYER << 7) | DAMAGE;
+    uint8_t MSB = DATA  >> 8;
+    uint8_t LSB = (DATA << 8) >> 8;
+    uint8_t crcBuffer[2] = {MSB, LSB};
+    uint16_t validCRC = CRC16.ccitt(crcBuffer, sizeof(crcBuffer));
+    if (validCRC == CRC) {
+      ledTime = millis();
+      digitalWrite(HIT_LED, HIGH);
+      printData(TEAM, PLAYER, DAMAGE);
+    }
+    irrecv.resume(); // Receive the next value
+  }
 }
 
 void loop() {
@@ -338,7 +378,7 @@ void loop() {
         updateDisplay();
         gameState = 2;
       }
-      TEMP = TEMP + 4;
+      //TEMP = TEMP + 4;  // comment out for debuggingd
       if (TEMP > 100) cooldown();
     }
   }
@@ -348,20 +388,23 @@ void loop() {
 
     if (reloadBtn.isPressed()) {
       CHARGES = CHARGES - 1;
-      
-      
-      if (CHARGES>=0) 
+
+
+      if (CHARGES >= 0)
       {
         recharge();
         AMMO = MAX_AMMO;
-        updateDisplay();    
-        gameState=1;
+        updateDisplay();
+        gameState = 1;
       }
       else gameState = 3; // out of ammo
     }
   }
   TEMP = TEMP - 0.25;
   if (TEMP < 0) TEMP = 0;
+  if (millis() - ledTime > 25) {
+    digitalWrite(HIT_LED, LOW);
+  }
   setLED(HEALTH >= 66 ? 1 : HEALTH >= 33 ? 3 : HEALTH >= 0 ? 0 : 7);
 }
 
