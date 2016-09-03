@@ -26,3 +26,12 @@ The data packet is 32 bits:
 
 At some point in the future the code will need to be re-written as a Finite State Machine to allow multi-tasking. 
 
+Required libraries:
+
+<Button.h>      https://github.com/JChristensen/Button
+<IRRemote.h>    https://github.com/z3t0/Arduino-IRremote
+<FastCRC.h>     https://github.com/FrankBoesing/FastCRC
+
+
+
+
