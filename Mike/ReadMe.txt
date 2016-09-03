@@ -14,6 +14,8 @@ Muzzle Flash LED's on Pin 3
 Up menu button on Pin 14
 Down menu button on Pin 13
 Enter menu button on pin 15
+IR Receiver on Pn 16
+HIT LED on Pin 17
 
 The data packet is 32 bits:
 
