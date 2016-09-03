@@ -28,9 +28,10 @@ At some point in the future the code will need to be re-written as a Finite Stat
 
 Required libraries:
 
-<Button.h>      https://github.com/JChristensen/Button
-<IRRemote.h>    https://github.com/z3t0/Arduino-IRremote
-<FastCRC.h>     https://github.com/FrankBoesing/FastCRC
+<LiquidCrystal.h>  Stock Arduino library
+<Button.h>         https://github.com/JChristensen/Button
+<IRRemote.h>       https://github.com/z3t0/Arduino-IRremote
+<FastCRC.h>        https://github.com/FrankBoesing/FastCRC
 
 
 
