@@ -278,7 +278,7 @@ void CheckForHit() {
 
         // if anything received by the IR Receier then run this:
         if (irrecv.decode(&RESULT)) {
-                irrecv.resume(); // Receive the next value
+
                 // RESULT.value contains received 64 bits
                 // Pick ou the bits as per protocol using the bitwise calculation below
                 // RESULT.value & (((1 << NUMBER_OF_BITS) - 1) << POSITION_OF_LEFTSHIFTED_FIRST_BIT)) >> SHIFT_TO_RIGHT_EDGE
@@ -295,9 +295,9 @@ void CheckForHit() {
                 // Find out what the CRC-16 value is for the data portion
                 uint16_t validCRC = CRC16.ccitt(crcBuffer, sizeof(crcBuffer));
                 // If there are no errors run this:
-                DebugIRPacketData(TEAM, PLAYER, DAMAGE);
+
                 if (validCRC == CRC) {
-                        Serial.println("CRC Valid");
+                        DebugIRPacketData(TEAM, PLAYER, DAMAGE);
                         HEALTH = HEALTH-damageTable[DAMAGE]; // You've been hit so health is reduced
                         if (HEALTH<=0) {
                                 HEALTH=0;
@@ -307,12 +307,17 @@ void CheckForHit() {
                         ledTime = millis();
                         digitalWrite(HIT_LED, HIGH);
 
-                        setLED(HEALTH >= 66 ? 1 : HEALTH >= 33 ? 3 : HEALTH >= 0 ? 0 : 7);
+                        setLED(HEALTH >= 6666 ? 1 : HEALTH >= 3333 ? 3 : HEALTH >= 0 ? 0 : 7);
                         DisplayGameStats();
                 }
-
+                irrecv.resume(); // Receive the next value
         }
 
+        if (millis() - ledTime > 25) {
+                digitalWrite(HIT_LED, LOW);
+        }
+
+        if (GAME_STATE==DEAD) YouAreDead();
 }
 
 void DisplayGameStats() {
@@ -474,11 +479,5 @@ void loop() {
         CheckForHit();
         CheckIfTriggerPressed();
         CheckIfReloadPressed();
-
-        if (millis() - ledTime > 25) {
-                digitalWrite(HIT_LED, LOW);
-        }
-
-        if (GAME_STATE==DEAD) YouAreDead();
 
 }
