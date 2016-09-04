@@ -6,7 +6,7 @@
 #include <IRremote.h>
 #include <FastCRC.h>
 
-#define FIRMWARE 0.8
+#define FIRMWARE 0.10
 
 FastCRC16 CRC16;
 
@@ -48,13 +48,13 @@ unsigned long ledTime;
 // default settings
 int MAX_AMMO = 30;
 int AMMO = MAX_AMMO;
-double HEALTH = 10000;
-int CHARGES = 10;
+int HEALTH = 10000;
+int CHARGES = 2;
 float TEMP = 0;
 
 // state machine variables
-byte gameState = 0; // 0 = Menu; 2 = Game On; 3 = Out Of Ammo; 4 = Dead
-byte menuState = 0;
+int gameState = 0; // 0 = Menu; 2 = Game On; 3 = Out Of Ammo; 4 = Dead
+int menuState = 0;
 
 struct PACKET {
         uint8_t TEAM;
@@ -161,7 +161,7 @@ void laserSound() {
         digitalWrite(FLASH_LED, LOW);
 }
 
-void recharge() {
+void rechargeSound() {
         float steps = 1;
         for (int start = 3000; start > 0; start = start - (int)steps) {
                 digitalWrite(BUZZER_PIN, HIGH); //positive square wave
@@ -320,7 +320,7 @@ void displayMenu() {
         }
 }
 
-void cooldown() {
+void cooldownSound() {
         for (float countdown = 0; countdown < 100; countdown = countdown + 0.1) {
                 digitalWrite(BUZZER_PIN, HIGH);
                 delayMicroseconds(countdown * 5);
@@ -339,7 +339,8 @@ void printData(uint16_t TEAM, uint16_t PLAYER, uint16_t DAMAGE) {
         Serial.print(teamTable[TEAM]);
         Serial.print(" team for ");
         Serial.print(damageTable[DAMAGE]);
-        Serial.println(" Damage.");
+        Serial.print(" Damage.       HEALTH:");
+        Serial.println(int(ceil(HEALTH / 100)));
 }
 
 void checkForHit() {
@@ -356,38 +357,50 @@ void checkForHit() {
                 uint8_t crcBuffer[2] = {MSB, LSB};
                 uint16_t validCRC = CRC16.ccitt(crcBuffer, sizeof(crcBuffer));
                 if (validCRC == CRC) {
-                        ledTime = millis();
-                        digitalWrite(HIT_LED, HIGH);
-                        printData(TEAM, PLAYER, DAMAGE);
+
                         HEALTH = HEALTH-damageTable[DAMAGE];
+
                         if (HEALTH<=0) {
-                                HEALTH==0;
+                                HEALTH=0;
                                 gameState=4;
                                 updateDisplay();
                         }
-                        irrecv.resume(); // Receive the next value
+                        ledTime = millis();
+                        digitalWrite(HIT_LED, HIGH);
+                        printData(TEAM, PLAYER, DAMAGE);
+                        setLED(HEALTH >= 66 ? 1 : HEALTH >= 33 ? 3 : HEALTH >= 0 ? 0 : 7);
                 }
+                irrecv.resume(); // Receive the next value
         }
 }
 
 void dead() {
+        Serial.println("Dead");
         digitalWrite(BLUE_LED, OFF);
         digitalWrite(GREEN_LED, OFF);
         digitalWrite(HIT_LED, LOW);
         int count=0;
         byte repeats=30;
-        while(1) {}
-        digitalWrite(RED_LED, ON);
-        if (count<repeats) tone(4, 250,100);
-        delay(100);
-        digitalWrite(RED_LED, OFF);
-        if (count<repeats) tone(4, 150, 100);
-        delay(100);
-        count++;
-}
+        while(1) {
+                digitalWrite(RED_LED, ON);
+                if (count<repeats) tone(4, 250,100);
+                delay(100);
+                digitalWrite(RED_LED, OFF);
+                if (count<repeats) tone(4, 150, 100);
+                delay(100);
+                count++;
+        }
 }
 
-
+void noAmmo() {
+        Serial.println("No Ammo");
+        while(1) {
+                reloadBtn.read(); //Read the button
+                if (reloadBtn.isPressed()) tone(4,100,250);
+                triggerBtn.read(); //Read the button
+                if (triggerBtn.isPressed()) tone(4,100,250);
+        }
+}
 
 void loop() {
         updateDisplay();
@@ -409,7 +422,7 @@ void loop() {
                                 gameState = 2;
                         }
                         //TEMP = TEMP + 4;  // comment out for debuggingd
-                        if (TEMP > 100) cooldown();
+                        if (TEMP > 100) cooldownSound();
                 }
         }
 
@@ -422,21 +435,27 @@ void loop() {
 
                         if (CHARGES >= 0)
                         {
-                                recharge();
+                                rechargeSound();
                                 AMMO = MAX_AMMO;
                                 updateDisplay();
                                 gameState = 1;
+
                         }
-                        else gameState = 3; // out of ammo
+                        if (CHARGES<0) {
+                                Serial.println("NO AMMO");
+                                gameState = 3; // out of ammo
+                        }
                 }
-        }
 
+
+                TEMP = TEMP - 0.25;
+                if (TEMP < 0) TEMP = 0;
+                if (millis() - ledTime > 25) {
+                        digitalWrite(HIT_LED, LOW);
+                }
+
+
+        }
+        if (gameState == 3) noAmmo();
         if (gameState == 4) dead();
-
-        TEMP = TEMP - 0.25;
-        if (TEMP < 0) TEMP = 0;
-        if (millis() - ledTime > 25) {
-                digitalWrite(HIT_LED, LOW);
-        }
-        setLED(HEALTH >= 66 ? 1 : HEALTH >= 33 ? 3 : HEALTH >= 0 ? 0 : 7);
 }
