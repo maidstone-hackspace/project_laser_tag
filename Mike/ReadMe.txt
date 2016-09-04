@@ -1,4 +1,5 @@
 Arduino Based LaserTag System
+** Note this project is still a work in progress **
 
 I'm using a Teensy 3.2 as the extra processing power will come in handy when I later add a colour TFT display and a sound processor.
 
