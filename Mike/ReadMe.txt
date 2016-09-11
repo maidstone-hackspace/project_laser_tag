@@ -7,8 +7,8 @@ I'm using a Teensy 3.2 as the extra processing power will come in handy when I l
 
 Parts List
 
-MicroController (I am using a Teensy 3.2)
-5 momentary pushbuttons
+MicroController (I am using a Teensy 3.2 - An Arduino nano will do fine)
+5 momentary pushbuttons (e.g. Rapid Order Code: 51-0712 )
 IR Emitter (Vishay TSAL6200 5mm 940nm IR Transmitter Diode) Rapid Order Code:  49-4513
 IR Reciever (38kHz) (Vishay TSOP4838 950nm IR Receiver Module 38kHz) Rapid Order Code:49-4728 
 5 x High Value Resistors (for buttons) 1K+
