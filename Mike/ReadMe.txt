@@ -9,14 +9,14 @@ Parts List
 
 MicroController (I am using a Teensy 3.2)
 5 momentary pushbuttons
-IR Emitter
-IR Reciever (38kHz)
+IR Emitter (Vishay TSAL6200 5mm 940nm IR Transmitter Diode) Rapid Order Code:  49-4513
+IR Reciever (38kHz) (Vishay TSOP4838 950nm IR Receiver Module 38kHz) Rapid Order Code:49-4728 
 5 x High Value Resistors (for buttons) 1K+
-3 x Current Limiting Resistor for RGB LED
+3 x Current Limiting Resistor for RGB LED (Depends on your LED datasheet - See https://www.sparkfun.com/tutorials/219) 
 Clear Blue LED(s) for Muzzle Flash
 Red LED for HIT
 RGB LED for Health/Team
-16x2 LCD Display with HD44780 Controller
+16x2 LCD Display with HD44780 Controller (e.g. Rapid Order Code or use eBay)
 10k Potentiometer (for LCD contrast)
 Piezo Buzzer
 
