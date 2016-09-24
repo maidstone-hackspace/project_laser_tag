@@ -1,0 +1,18 @@
+# Component List
+Community project to create a laser tag system
+
+* Board
+** Teensy 3.1
+*** http://www.ebay.co.uk/itm/PJRC-Teensy-3-2-With-Header-Pins-/161870504500?hash=item25b03be234:g:9egAAOSw14xWLlmZ
+** nano
+*** 
+
+* LEDs
+** rgb led for team colours
+*** https://www.rapidonline.com/TruOpto-OSTA71A1D-A-Piranha-Rgb-LED-72-8998?sourceRefKey=242P7i6bg&filterSearchScope=1
+
+* Lens
+ ** http://www.ebay.co.uk/itm/301678645745
+
+* battery
+ ** http://vod.ebay.co.uk/vod/FetchOrderDetails?ViewPaymentStatus&transId=1576808708018&itemId=282050256520&_trksid=p2045573.m570.l6004&_trkparms=gh1g%3DI282050256520.N41.S1.R1.TR2
