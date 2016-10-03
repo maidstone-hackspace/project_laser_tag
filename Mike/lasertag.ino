@@ -222,7 +222,7 @@ void pickPlayer() {
 }
 
 void setDataPacket() {
-  dataPacket = (DATA.TEAM << 13) | (DATA.PLAYER << 7) | DATA.DAMAGE;
+  dataPacket = ((uint32_t)DATA.TEAM << 13) | (DATA.PLAYER << 7) | DATA.DAMAGE;
   uint8_t packetBuffer[2] = {dataPacket >> 8, (dataPacket << 8) >> 8};
   uint16_t CRC = CRC16.ccitt(packetBuffer, sizeof(packetBuffer));
   dataPacket = (CRC << 16) | dataPacket;
