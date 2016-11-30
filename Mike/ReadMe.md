@@ -50,8 +50,7 @@ The data packet is 40 bits: (As of revision 0.16)
 
 ##Required libraries
 
-*
-* <LiquidCrystal.h>   Stock Arduino library
+  * <LiquidCrystal.h>  Stock Arduino library
 * <Button.h>         https://github.com/JChristensen/Button
 * <IRRemote.h>       https://github.com/z3t0/Arduino-IRremote
 * <FastCRC.h>        https://github.com/FrankBoesing/FastCRC
