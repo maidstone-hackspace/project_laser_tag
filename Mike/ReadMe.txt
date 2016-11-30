@@ -1,16 +1,12 @@
 Arduino Based LaserTag System
 ** Note this project is still a work in progress **
 
-I'm using a Teensy 3.2 as the extra processing power will come in handy when I later add a colour TFT display and a sound processor.
-
-
-
 Parts List
 
-MicroController (I am using a Teensy 3.2 - An Arduino nano will do fine)
+Arduino Nano
 5 momentary pushbuttons (e.g. Rapid Order Code: 51-0712 )
 IR Emitter (Vishay TSAL6200 5mm 940nm IR Transmitter Diode) Rapid Order Code:  49-4513
-IR Reciever (38kHz) (Vishay TSOP4838 950nm IR Receiver Module 38kHz) Rapid Order Code:49-4728 
+IR Receiver (38kHz) (Vishay TSOP4838 950nm IR Receiver Module 38kHz) Rapid Order Code:49-4728 
 5 x High Value Resistors (for buttons) 1K+
 3 x Current Limiting Resistor for RGB LED (Depends on your LED datasheet - See https://www.sparkfun.com/tutorials/219) 
 Clear Blue LED(s) for Muzzle Flash
@@ -19,7 +15,6 @@ RGB LED for Health/Team
 16x2 LCD Display with HD44780 Controller (e.g. Rapid Order Code or use eBay)
 10k Potentiometer (for LCD contrast)
 Piezo Buzzer
-
 
 
 Pins used
@@ -40,14 +35,13 @@ HIT LED on Pin 17
 All buttons must be pulled to ground when not pressed. 
 
 
+The data packet is 40 bits: (As of revision 0.16)
 
-The data packet is 32 bits:
-
-0..6     7-bit  : Damage (using a 128 element look-up table for damage) 
-7..12     6-bit  : Player ID (64 Players per team)
-13..15    3-bit  : Team ID (8 teams - Red, Blue, Green, Yellow, Cyan, magenta, White, Solo)
-16..31   16-bit : CRC-16
-
+0..3     4-bit  : Damage (using a 16 element look-up table for damage) 
+4..8     5-bit  : Player ID (32 Players per team)
+9..11    3-bit  : Team ID (8 teams - Red, Blue, Green, Yellow, Cyan, magenta, White, Solo)
+12..23   12-bit : 3 digit BCD game passcode (e.g. A7F)      
+24..39   16-bit : CRC-16
 
 
 Required libraries:
