@@ -1,5 +1,5 @@
-**Arduino Based LaserTag System**
-* Note this project is still a work in progress *
+#Arduino Based LaserTag System
+*Note this project is still a work in progress*
 
 **Parts List**
 
