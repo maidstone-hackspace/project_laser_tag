@@ -9,7 +9,8 @@
 * IR Emitter (Vishay TSAL6200 5mm 940nm IR Transmitter Diode) Rapid Order Code:  49-4513
 * IR Receiver (38kHz) (Vishay TSOP4838 950nm IR Receiver Module 38kHz) Rapid Order Code:49-4728 
 * 5 x High Value Resistors (for buttons) 1K+
-* 3 x Current Limiting Resistor for RGB LED (Depends on your LED datasheet - See https://www.sparkfun.com/tutorials/219) 
+* 3 x Current Limiting Resistor for RGB LED 
+  * (Depends on your LED datasheet - See https://www.sparkfun.com/tutorials/219) 
 * Clear Blue LED(s) for Muzzle Flash
 * Red LED for HIT
 * RGB LED for Health/Team
