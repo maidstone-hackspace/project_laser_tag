@@ -1,7 +1,7 @@
-Arduino Based LaserTag System
-** Note this project is still a work in progress **
+**Arduino Based LaserTag System**
+* Note this project is still a work in progress *
 
-Parts List
+**Parts List**
 
 Arduino Nano
 5 momentary pushbuttons (e.g. Rapid Order Code: 51-0712 )
@@ -17,7 +17,7 @@ RGB LED for Health/Team
 Piezo Buzzer
 
 
-Pins used
+**Pins used**
 
 Trigger button on Pin 2
 Reload Button on Pin 6
@@ -32,8 +32,9 @@ Enter menu button on pin 15
 IR Receiver on Pn 16
 HIT LED on Pin 17
 
-All buttons must be pulled to ground when not pressed. 
+*All buttons must be pulled to ground when not pressed. *
 
+**Data Packet**
 
 The data packet is 40 bits: (As of revision 0.16)
 
@@ -44,7 +45,7 @@ The data packet is 40 bits: (As of revision 0.16)
 24..39   16-bit : CRC-16
 
 
-Required libraries:
+**Required libraries:**
 
 <LiquidCrystal.h>  Stock Arduino library
 <Button.h>         https://github.com/JChristensen/Button
