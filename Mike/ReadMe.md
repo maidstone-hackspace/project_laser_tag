@@ -1,6 +1,7 @@
 #Arduino Based LaserTag System
 *Note this project is still a work in progress*
 
+
 **Parts List**
 
 Arduino Nano
@@ -33,6 +34,7 @@ IR Receiver on Pn 16
 HIT LED on Pin 17
 
 *All buttons must be pulled to ground when not pressed. *
+
 
 **Data Packet**
 
