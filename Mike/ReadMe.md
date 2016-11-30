@@ -2,7 +2,7 @@
 *Note this project is still a work in progress*
 
 
-**Parts List**
+##Parts List
 
 * Arduino Nano
 * 5 momentary pushbuttons (e.g. Rapid Order Code: 51-0712 )
@@ -19,7 +19,7 @@
 * Piezo Buzzer
 
 
-**Pins used**
+##Pins used
 
 * Trigger button on Pin 2
 * Reload Button on Pin 6
@@ -37,7 +37,7 @@
 *All buttons must be pulled to ground when not pressed. *
 
 
-**Data Packet**
+##Data Packet
 
 The data packet is 40 bits: (As of revision 0.16)
 
@@ -48,7 +48,7 @@ The data packet is 40 bits: (As of revision 0.16)
 * 24..39   16-bit : CRC-16
 
 
-**Required libraries:**
+##Required libraries:
 
 * <LiquidCrystal.h>  Stock Arduino library
 * <Button.h>         https://github.com/JChristensen/Button
